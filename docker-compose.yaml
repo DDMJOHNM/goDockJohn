@@ -1,0 +1,23 @@
+version: "3.6"
+services:
+  goservice:
+    build: "."
+    ports:
+      - "8080"
+  nginx:
+    build: "./nginx"
+    ports:
+      - "80:80"
+    depends_on:
+      - "goservice"
+  database:
+    image: "postgres:12.0" # use latest official postgres version
+    env_file:
+      - database.env # configure postgres
+    volumes:
+      - database-data:/var/lib/postgresql/data/ 
+    ports:
+      - 5432:5432
+volumes:
+  database-data: # named volumes can be managed easier using docker-compose
+   
