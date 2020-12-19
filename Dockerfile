@@ -1,10 +1,10 @@
-FROM golang:1.12.7-alpine3.10 AS build
+FROM golang:1.14.4-alpine AS build
 # Support CGO and SSL
 RUN apk --no-cache add gcc g++ make
 RUN apk add git
 WORKDIR /go/src/app
 COPY . .
-RUN go get github.com/labstack/echo
+RUN go mod download
 RUN GOOS=linux go build -ldflags="-s -w" -o ./bin/test ./main.go
 
 FROM alpine:3.10
