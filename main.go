@@ -49,7 +49,7 @@ func GetItems(c echo.Context) error {
 	dataType := c.Param("data")
 
 	if dataType == "string" {
-		return c.String(http.StatusOK, fmt.Sprintf("my user name is: %s my id is: %d  I was created at: %v", name, id, createdAt))
+		return c.String(http.StatusOK, fmt.Sprintf("my user is : %s my id is: %d  I was created at: %v", name, id, createdAt))
 	} else {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Please specify the datatype as String or Json"})
@@ -61,3 +61,4 @@ func GetItems(c echo.Context) error {
 //env var
 //hot reload
 //logging
+//golang migrate seed

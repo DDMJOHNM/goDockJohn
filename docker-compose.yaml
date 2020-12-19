@@ -4,7 +4,7 @@ services:
     build: .
     command: ["go", "run", "main.go"]
     volumes:
-      - .:/go/src/app
+      - .:/app
     ports:
       - "8000:8000"
   goservice:
