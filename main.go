@@ -26,20 +26,22 @@ func main() {
 
 func GetItems(c echo.Context) error {
 
-	connStr := "postgres://postgres:john@localhost/demo_backend?sslmode=verify-full"
+	connStr := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		os.Getenv("POSTGRES_HOSTNAME"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "ERROR &v\n", err)
+		fmt.Fprintf(os.Stdout, "CONNECTION ERROR &v\n", err)
 	}
 
 	var id int64
 	var name string
 	var createdAt time.Time
 
-	err = db.QueryRow("select id, name, created-at from user where id=$1", 1).Scan(&id, &name, &createdAt)
+	err = db.QueryRow("select id, name, created-at from users where id=$1", 1).Scan(&id, &name, &createdAt)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "ERROR &v\n", err)
+		fmt.Fprintf(os.Stdout, "QUERY ERROR &v\n", err)
 	}
 
 	fmt.Fprintf(os.Stdout, "ID &v\n", id)
