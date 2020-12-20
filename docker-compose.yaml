@@ -5,6 +5,8 @@ services:
     command: ["go", "run", "main.go"]
     volumes:
       - .:/app
+    env_file:
+      - database.env
     ports:
       - "8000:8000"
   goservice:

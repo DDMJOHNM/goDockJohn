@@ -27,9 +27,9 @@ func main() {
 func GetItems(c echo.Context) error {
 
 	var err error
-	conn, err := pgx.Connect(context.Background(), "postgresql://postgres:john@composetest_database_1/demo_backend?sslmode=disable")
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connection to database: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -49,7 +49,7 @@ func GetItems(c echo.Context) error {
 	dataType := c.Param("data")
 
 	if dataType == "string" {
-		return c.String(http.StatusOK, fmt.Sprintf("my user is : %s my id is: %d  I was created at: %v", name, id, createdAt))
+		return c.String(http.StatusOK, fmt.Sprintf("my user name is : %s my id is: %d  I was created at: %v", name, id, createdAt))
 	} else {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Please specify the datatype as String or Json"})
@@ -58,7 +58,5 @@ func GetItems(c echo.Context) error {
 
 //todo:
 //connection pool
-//env var
-//hot reload
 //logging
-//golang migrate seed
+//golang migrate seed db
