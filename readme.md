@@ -1,8 +1,8 @@
-# Dockerise GOLANG Echo Api With Migrations, Postgres 
+# Dockerised GOLANG Echo Api With Migrations, Postgres 
 author John Mason
 
 
 ## Commands 
-docker-compose up -d
+docker-compose up --build
 docker compose down 
 
