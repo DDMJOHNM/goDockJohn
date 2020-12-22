@@ -20,23 +20,18 @@ type User struct {
 	CreatedAt time.Time
 }
 
-func Initialise() (Database, error) {
+func Initialise(c echo.Context) (Database, error) {
 
 	db := Database{}
 	var err error
 
-	pgxConfig, err := pgx.ParseConnectionString(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to parse connection string: %v\n", err)
-		os.Exit(1)
-	}
-
-	conn, err := pgx.Connect(pgxConfig)
+	conn, err := pgx.Connect(pgx.ConnConfig{Host: os.Getenv("DATABASE_URL")})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
 
+	defer conn.Close()
 	db.Conn = conn
 
 	defer db.Conn.Close()
