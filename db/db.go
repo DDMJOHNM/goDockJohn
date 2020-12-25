@@ -34,9 +34,9 @@ func (db *Database) Initialise() (*Database, error) {
 	return db, nil
 }
 
-//http://localhost:8000/items/json?id=1
+//http://localhost:8000/user/json?id=1
 
-func (db *Database) GetItems(c echo.Context) error {
+func (db *Database) GetUser(c echo.Context) error {
 
 	db.Initialise()
 

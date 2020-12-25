@@ -14,7 +14,7 @@ func main() {
 	db := db.Database{}
 
 	//handlers
-	e.GET("/items/:data", db.GetItems)
+	e.GET("/user/:data", db.GetUser)
 
 	e.Logger.Fatal(e.Start(":8000"))
 
