@@ -1,12 +1,13 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/labstack/echo/v4"
 )
 
@@ -20,28 +21,24 @@ type User struct {
 	CreatedAt time.Time
 }
 
-func Initialise(c echo.Context) (Database, error) {
+func (db *Database) Initialise() (*Database, error) {
 
-	db := Database{}
 	var err error
 
-	conn, err := pgx.Connect(pgx.ConnConfig{Host: os.Getenv("DATABASE_URL")})
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-
-	defer conn.Close()
 	db.Conn = conn
-
-	defer db.Conn.Close()
-
 	return db, nil
 }
 
-//http://localhost:8000/item/json?id=1
+//http://localhost:8000/items/json?id=1
 
 func (db *Database) GetItems(c echo.Context) error {
+
+	db.Initialise()
 
 	idd := c.QueryParam("id")
 
@@ -49,7 +46,7 @@ func (db *Database) GetItems(c echo.Context) error {
 	var id int64
 	var createdAt time.Time
 
-	err := db.Conn.QueryRow("select id, name, createdat from users where id=$1", idd).Scan(&id, &name, &createdAt)
+	err := db.Conn.QueryRow(context.Background(), "SELECT id, name, createdat FROM users WHERE id=$1", idd).Scan(&id, &name, &createdAt)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 		os.Exit(1)
@@ -61,16 +58,17 @@ func (db *Database) GetItems(c echo.Context) error {
 		CreatedAt: createdAt,
 	}
 
-	defer db.Conn.Close()
+	defer db.Conn.Close(context.Background())
 
+	// // fmt.Print(u)
 	dataType := c.Param("data")
-
 	if dataType == "string" {
 		return c.String(http.StatusOK, fmt.Sprintf("my user name is : %s my id is: %d  I was created at: %v", name, id, createdAt))
 	} else if dataType == "Json" {
-		return c.String(http.StatusOK, fmt.Sprintf("User: %v", u))
+		return c.JSON(http.StatusOK, u)
 	} else {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Please specify the datatype as String or Json"})
 	}
+	//return c.String(http.StatusBadRequest, fmt.Sprintf("User: %s", "hello"))
 }
