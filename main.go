@@ -13,7 +13,10 @@ func main() {
 	e.Use(middleware.Logger())
 	db := db.Database{}
 
-	//handlers
+	//Handlers
+	e.GET("/createdb", db.CreateDb)
+
+	//Handlers - User
 	e.GET("/user/:data", db.GetUser)
 
 	e.Logger.Fatal(e.Start(":8000"))
