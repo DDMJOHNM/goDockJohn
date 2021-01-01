@@ -1,18 +1,19 @@
-# Dockerised GOLANG Echo Api With Migrations,Postgres 
-author John Mason DDM 2020
+# Dockerised GOLANG Echo Api With Migrations,Postgres,Go Modules 
+Author John Mason DDM &copy;2020
 
 ## Commands 
+```
 docker-compose up --build
 docker compose down 
+```
 
 ```
 Api Routes
 
-Create Db - Migrate Down Then Up 
-http://localhost:8000/createdb
-
-
-Get User
-http://localhost:8000/user/json?id=1
 
 ```
+
+### References
+https://github.com/golang-migrate/migrate/blob/master/database/postgres/README.md
+https://libraries.io/github/jackc/pgx
+https://echo.labstack.com/guide

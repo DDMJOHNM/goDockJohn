@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -27,7 +28,6 @@ type User struct {
 func (db *Database) Initialise() (*Database, error) {
 
 	var err error
-
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
@@ -65,6 +65,44 @@ func (db *Database) CreateDb(c echo.Context) error {
 
 }
 
+func (db *Database) Login(c echo.Context) error {
+
+	u := c.FormValue("username")
+	p := c.FormValue("password")
+
+	//todo: query db here login check and save current session in user table
+	//create user
+	//use basic auth to send toekn with request see restricted group.
+
+	if u != "john" || p != "secret" {
+		return echo.ErrUnauthorized
+	}
+
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["name"] = "john"
+	claims["admin"] = true
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+	t, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	if err != nil {
+		return err
+	}
+
+	//on successful login response is returned.
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"token": t,
+	})
+}
+
+func (db *Database) Restricted(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	return c.String(http.StatusOK, "Welcome "+name+"!")
+}
+
 func (db *Database) GetUser(c echo.Context) error {
 
 	db.Initialise()
@@ -81,6 +119,7 @@ func (db *Database) GetUser(c echo.Context) error {
 		os.Exit(1)
 	}
 
+	//TODO:Bind User Struct
 	u := &User{
 		Id:        id,
 		Name:      name,
