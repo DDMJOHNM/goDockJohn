@@ -23,12 +23,13 @@ func main() {
 
 	//Handlers
 	e.GET("/createdb", db.CreateDb)
+	e.POST("/createUser", db.CreateUser)
 	e.GET("/user/:data", db.GetUser)
 	e.POST("/login", db.Login)
 
+	//Register Restricted Routes Here with any handler
 	r := e.Group("/v1")
 	r.Use(middleware.JWT([]byte(os.Getenv("SECRET"))))
-	//Register Restricted Routes Here with any handler
 	r.GET("/", db.Restricted)
 	e.Logger.Fatal(e.Start(":8000"))
 
