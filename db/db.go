@@ -37,7 +37,6 @@ func (db *Database) Initialise() (*Database, error) {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-
 	db.Conn = conn
 	return db, nil
 }

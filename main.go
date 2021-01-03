@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 )
 
 type jwtCustomClaims struct {
@@ -19,18 +20,20 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
+	e.Logger.SetLevel(log.DEBUG)
+	e.Logger.Debug("HEllo")
 	db := db.Database{}
 
 	//Handlers
 	e.GET("/createdb", db.CreateDb)
 	e.POST("/createUser", db.CreateUser)
-	e.GET("/user/:data", db.GetUser)
 	e.POST("/login", db.Login)
 
 	//Register Restricted Routes Here with any handler
 	r := e.Group("/v1")
 	r.Use(middleware.JWT([]byte(os.Getenv("SECRET"))))
 	r.GET("/", db.Restricted)
+	r.GET("/user/:data", db.GetUser)
 	e.Logger.Fatal(e.Start(":8000"))
 
 }
