@@ -11,13 +11,13 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Database struct {
-	Conn *pgx.Conn
+	//Conn *pgx.Conn
+	Pool *pgxpool.Pool
 }
 
 type User struct {
@@ -32,12 +32,13 @@ type User struct {
 func (db *Database) Initialise() (*Database, error) {
 
 	var err error
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	dbpool, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	db.Conn = conn
+	//defer dbpool.Close()
+	db.Pool = dbpool
 	return db, nil
 }
 
@@ -70,69 +71,70 @@ func (db *Database) CreateDb(c echo.Context) error {
 
 func (db *Database) Login(c echo.Context) error {
 
-	u := c.FormValue("username")
-	p := c.FormValue("password")
+	// u := c.FormValue("username")
+	// p := c.FormValue("password")
 
-	user := &User{}
+	// user := &User{}
 
-	db.Initialise()
-	defer db.Conn.Close(context.Background())
+	// db.Initialise()
+	// defer db.Conn.Close(context.Background())
 
-	var name string
-	var id int64
-	var createdAt time.Time
-	var passwordhash string
+	// var name string
+	// var id int64
+	// var createdAt time.Time
+	// var passwordhash string
 
-	err := db.Conn.QueryRow(context.Background(), "SELECT users.id, users.name, users.createdat,users.passwordhash FROM users WHERE name=$1", u).Scan(&id, &name, &createdAt, &passwordhash)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-		os.Exit(1)
-	}
+	// err := db.Conn.QueryRow(context.Background(), "SELECT users.id, users.name, users.createdat,users.passwordhash FROM users WHERE name=$1", u).Scan(&id, &name, &createdAt, &passwordhash)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+	// 	os.Exit(1)
+	// }
 
-	user.Id = id
-	user.Name = name
-	user.Password = ""
-	user.PasswordHash = passwordhash
-	user.CreatedAt = createdAt
+	// user.Id = id
+	// user.Name = name
+	// user.Password = ""
+	// user.PasswordHash = passwordhash
+	// user.CreatedAt = createdAt
 
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["name"] = user.Name
-	claims["admin"] = true
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	// token := jwt.New(jwt.SigningMethodHS256)
+	// claims := token.Claims.(jwt.MapClaims)
+	// claims["name"] = user.Name
+	// claims["admin"] = true
+	// claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-	t, err := token.SignedString([]byte(os.Getenv("SECRET")))
-	if err != nil {
-		return err
-	}
+	// t, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	// if err != nil {
+	// 	return err
+	// }
 
-	user.Token = t
+	// user.Token = t
 
-	err = bcrypt.CompareHashAndPassword(
-		[]byte(user.PasswordHash),
-		[]byte(p+os.Getenv("PEPPER")))
+	// err = bcrypt.CompareHashAndPassword(
+	// 	[]byte(user.PasswordHash),
+	// 	[]byte(p+os.Getenv("PEPPER")))
 
-	switch err {
-	case nil:
+	// switch err {
+	// case nil:
 
-		db.Initialise()
-		defer db.Conn.Close(context.Background())
-		_, err = db.Conn.Exec(context.Background(), "UPDATE users set token=$1 WHERE id=($2)", user.Token, &user.Id)
+	// 	db.Initialise()
+	// 	defer db.Conn.Close(context.Background())
+	// 	_, err = db.Conn.Exec(context.Background(), "UPDATE users set token=$1 WHERE id=($2)", user.Token, &user.Id)
 
-		if err != nil {
-			return err
-		}
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		return c.JSON(http.StatusOK, map[string]string{
-			"token": t,
-		})
+	// 	return c.JSON(http.StatusOK, map[string]string{
+	// 		"token": t,
+	// 	})
 
-	case bcrypt.ErrMismatchedHashAndPassword:
-		return c.JSON(http.StatusBadRequest, err.Error())
-	default:
-		return c.JSON(http.StatusOK, user)
+	// case bcrypt.ErrMismatchedHashAndPassword:
+	// 	return c.JSON(http.StatusBadRequest, err.Error())
+	// default:
+	// 	return c.JSON(http.StatusOK, user)
 
-	}
+	// }
+	return nil
 
 }
 
