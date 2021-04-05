@@ -8,7 +8,7 @@ RUN go mod download
 
 RUN go get github.com/githubnemo/CompileDaemon
 
-ENTRYPOINT CompileDaemon --build="go build main.go" --command=./main
+ENTRYPOINT CompileDaemon --build="go build cmd/main.go" --command=./main
 
 
 # FROM golang:1.14.4-alpine AS build
