@@ -75,9 +75,6 @@ func CreateUser(db *pgxpool.Pool) echo.HandlerFunc {
 		user.PasswordHash = string(hashedBytes)
 		user.CreatedAt = time.Now()
 
-		// // // //TODO: check if user exists in DB
-		// db := c.Get(models.DBContextKey).(*pgxpool.Pool)
-
 		_, err = db.Exec(context.Background(), "INSERT INTO users(name,createdat,passwordhash) values($1,$2,$3)", user.Name, &user.CreatedAt, &user.PasswordHash)
 
 		if err != nil {
@@ -87,7 +84,6 @@ func CreateUser(db *pgxpool.Pool) echo.HandlerFunc {
 		defer db.Close()
 
 		return c.String(http.StatusOK, "User successfully created")
-		//return nil
 
 	}
 }
