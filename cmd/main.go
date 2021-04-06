@@ -3,7 +3,6 @@ package main
 import (
 	"composetest/bindings"
 	"composetest/handlers"
-	"composetest/models"
 	"context"
 	"fmt"
 	"os"
@@ -26,12 +25,6 @@ func main() {
 
 	e := echo.New()
 
-	e.GET("/health-check", handlers.HealthCheck)
-	//g := e.Group("/v1")
-	e.POST("/login", handlers.Login)
-	e.POST("/createUser", handlers.CreateUser)
-
-	e.Logger.Fatal(e.Start(":8000"))
 	e.Validator = new(bindings.Validator)
 
 	dbpool, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
@@ -39,35 +32,22 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	//defer dbpool.Close()
+	defer dbpool.Close()
 
-	// db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
-	// if err != nil {
-	// 	e.Logger.Infof("%v", "Unable to connect to database:", err)
-	// }
+	e.GET("/health-check", handlers.HealthCheck)
+	//g := e.Group("/v1")
+	e.POST("/login", handlers.Login(dbpool))
+	e.POST("/createUser", handlers.CreateUser(dbpool))
 
-	e.Logger.Infof("%v", dbpool)
+	e.Logger.Fatal(e.Start(":8000"))
 
-	// err = db.Ping()
-	// if err != nil {
-	// 	e.Logger.Infof("%v", "Unable to connect to database:", err)
-	// }
+	// e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+	// 	return func(c echo.Context) error {
+	// 		c.Set("db", dbpool)
 
-	// dbpool, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-	// 	os.Exit(1)
-	// }
-
-	//defer dbpool.Close()
-
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Set(models.DBContextKey, dbpool)
-			fmt.Fprintf(os.Stdout, "Unable to connect to database: %v\n", dbpool)
-			return next(c)
-		}
-	})
+	// 		return next(c)
+	// 	}
+	// })
 
 	// e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 	// 	return func(c echo.Context) error {
@@ -102,11 +82,5 @@ func main() {
 }
 
 //todo
-//connection pool
-//lift out db init call to main.go
-//logging
-//seed db
-//auth restricted routes
-//bind struct
-//logout
 //aws?? or gcp?? -cloud run??
+//frontend

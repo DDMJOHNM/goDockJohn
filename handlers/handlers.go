@@ -15,76 +15,81 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(c echo.Context) error {
+func Login(db *pgxpool.Pool) echo.HandlerFunc {
 
-	resp := renderings.LoginResponse{}
-	lr := new(bindings.LoginRequest)
-	if err := c.Bind(lr); err != nil {
-		resp.Success = false
-		resp.Message = "unable to send bin request for login"
-		return c.JSON(http.StatusBadRequest, resp)
+	return func(c echo.Context) error {
+
+		resp := renderings.LoginResponse{}
+		lr := new(bindings.LoginRequest)
+		if err := c.Bind(lr); err != nil {
+			resp.Success = false
+			resp.Message = "unable to send bin request for login"
+			return c.JSON(http.StatusBadRequest, resp)
+		}
+
+		if err := lr.Validate(); err != nil {
+			resp.Success = false
+			resp.Message = err.Error()
+			return c.JSON(http.StatusBadRequest, resp)
+		}
+
+		user, err := models.GetUserByName(db, lr.Username)
+		if err != nil {
+			resp.Success = false
+			resp.Message = "Username or Password incorrect"
+			return c.JSON(http.StatusUnauthorized, resp)
+		}
+
+		return c.JSON(http.StatusOK, user)
+
 	}
-
-	if err := lr.Validate(); err != nil {
-		resp.Success = false
-		resp.Message = err.Error()
-		return c.JSON(http.StatusBadRequest, resp)
-	}
-
-	//db := c.Get(models.DBContextKey).(*pgxpool.Pool)
-
-	// user, err := models.GetUserByName(db, lr.Username)
-	// if err != nil {
-	// 	resp.Success = false
-	// 	resp.Message = "Username or Password incorrect"
-	// 	return c.JSON(http.StatusUnauthorized, resp)
-	// }
-
-	return c.JSON(http.StatusOK, c.Get(models.DBContextKey))
 
 }
 
-func CreateUser(c echo.Context) error {
+func CreateUser(db *pgxpool.Pool) echo.HandlerFunc {
 
-	user := new(users.User)
+	return func(c echo.Context) error {
 
-	resp := renderings.LoginResponse{}
-	lr := new(bindings.LoginRequest)
-	if err := c.Bind(lr); err != nil {
-		resp.Success = false
-		resp.Message = "unable to send bin request for login"
-		return c.JSON(http.StatusBadRequest, resp)
+		user := new(users.User)
+		resp := renderings.LoginResponse{}
+		lr := new(bindings.LoginRequest)
+		if err := c.Bind(lr); err != nil {
+			resp.Success = false
+			resp.Message = "unable to send bin request for login"
+			return c.JSON(http.StatusBadRequest, resp)
+		}
+
+		if err := lr.Validate(); err != nil {
+			resp.Success = false
+			resp.Message = err.Error()
+			return c.JSON(http.StatusBadRequest, resp)
+		}
+
+		hashedBytes, err := bcrypt.GenerateFromPassword(
+			[]byte(lr.Password+os.Getenv("PEPPER")), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user.Name = lr.Username
+		user.Password = ""
+		user.PasswordHash = string(hashedBytes)
+		user.CreatedAt = time.Now()
+
+		// // // //TODO: check if user exists in DB
+		// db := c.Get(models.DBContextKey).(*pgxpool.Pool)
+
+		_, err = db.Exec(context.Background(), "INSERT INTO users(name,createdat,passwordhash) values($1,$2,$3)", user.Name, &user.CreatedAt, &user.PasswordHash)
+
+		if err != nil {
+			return err
+		}
+
+		defer db.Close()
+
+		return c.String(http.StatusOK, "User successfully created")
+		//return nil
+
 	}
-
-	if err := lr.Validate(); err != nil {
-		resp.Success = false
-		resp.Message = err.Error()
-		return c.JSON(http.StatusBadRequest, resp)
-	}
-
-	hashedBytes, err := bcrypt.GenerateFromPassword(
-		[]byte(lr.Password+os.Getenv("PEPPER")), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	user.Name = lr.Username
-	user.Password = ""
-	user.PasswordHash = string(hashedBytes)
-	user.CreatedAt = time.Now()
-
-	// // //TODO: check if user exists in DB
-	db := c.Get(models.DBContextKey).(*pgxpool.Pool)
-
-	_, err = db.Exec(context.Background(), "INSERT INTO users(name,createdat,passwordhash) values($1,$2,$3)", user.Name, &user.CreatedAt, &user.PasswordHash)
-
-	if err != nil {
-		return err
-	}
-
-	defer db.Close()
-
-	return c.String(http.StatusOK, "User successfully created")
-	//return nil
 }
 
 func HealthCheck(c echo.Context) error {
