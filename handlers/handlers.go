@@ -40,6 +40,8 @@ func Login(db *pgxpool.Pool) echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, resp)
 		}
 
+		//defer db.Close()
+
 		return c.JSON(http.StatusOK, user)
 
 	}
@@ -81,7 +83,7 @@ func CreateUser(db *pgxpool.Pool) echo.HandlerFunc {
 			return err
 		}
 
-		defer db.Close()
+		//defer db.Close()
 
 		return c.String(http.StatusOK, "User successfully created")
 

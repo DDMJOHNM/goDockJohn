@@ -9,6 +9,8 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/labstack/gommon/log"
 )
 
 // type jwtCustomClaims struct {
@@ -24,7 +26,9 @@ import (
 func main() {
 
 	e := echo.New()
-
+	e.Use(middleware.Logger())
+	e.Logger.SetLevel(log.DEBUG)
+	e.Logger.Debug("HEllo")
 	e.Validator = new(bindings.Validator)
 
 	dbpool, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))

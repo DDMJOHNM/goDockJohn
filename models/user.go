@@ -27,7 +27,7 @@ func GetUserByName(db *pgxpool.Pool, username string) (User, error) {
 		return user, errors.Wrap(err, "Database scan error")
 	}
 
-	defer db.Close()
+	//defer db.Close()
 
 	return user, nil
 
