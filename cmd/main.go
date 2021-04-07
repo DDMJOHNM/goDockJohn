@@ -28,7 +28,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Logger.SetLevel(log.DEBUG)
-	e.Logger.Debug("HEllo")
+
 	e.Validator = new(bindings.Validator)
 
 	dbpool, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
@@ -37,6 +37,8 @@ func main() {
 		os.Exit(1)
 	}
 	defer dbpool.Close()
+
+	e.Logger.Debug(dbpool)
 
 	e.GET("/health-check", handlers.HealthCheck)
 	//g := e.Group("/v1")
