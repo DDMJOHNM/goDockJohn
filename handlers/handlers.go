@@ -6,10 +6,14 @@ import (
 	"composetest/old_code/api/users"
 	"composetest/renderings"
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
@@ -88,6 +92,36 @@ func CreateUser(db *pgxpool.Pool) echo.HandlerFunc {
 		return c.String(http.StatusOK, "User successfully created")
 
 	}
+}
+
+func CreateDb(db *pgxpool.Pool) echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+
+		m, err := migrate.New(
+			"file://migration",
+			os.Getenv("DATABASE_URL"))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Migrate unable to connect to database: %v\n", err)
+			os.Exit(1)
+			return err
+		}
+
+		// if err := m.Down(); err != nil {
+		// 	fmt.Fprintf(os.Stderr, "Unable to migrate down: %v\n", err)
+		// 	os.Exit(1)
+		// 	return err
+		// }
+
+		if err := m.Up(); err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to migarate up: %v\n", err)
+			os.Exit(1)
+			return err
+		}
+
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Result: %s", "Migrate up success"))
+	}
+
 }
 
 func HealthCheck(c echo.Context) error {

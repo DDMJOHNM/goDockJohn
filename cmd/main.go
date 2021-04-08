@@ -44,6 +44,7 @@ func main() {
 	//g := e.Group("/v1")
 	e.POST("/login", handlers.Login(dbpool))
 	e.POST("/createUser", handlers.CreateUser(dbpool))
+	e.GET("/createdb", handlers.CreateDb(dbpool))
 
 	e.Logger.Fatal(e.Start(":8000"))
 
