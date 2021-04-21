@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -46,7 +47,46 @@ func Login(db *pgxpool.Pool) echo.HandlerFunc {
 
 		//defer db.Close()
 
-		return c.JSON(http.StatusOK, user)
+		token := jwt.New(jwt.SigningMethodHS256)
+		claims := token.Claims.(jwt.MapClaims)
+		claims["name"] = user.Name
+		claims["admin"] = true
+		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+		t, err := token.SignedString([]byte(os.Getenv("SECRET")))
+		if err != nil {
+			return err
+		}
+
+		resp.Token = t
+
+		c.Logger().Debug(user)
+		c.Logger().Debug(resp)
+
+		// err = bcrypt.CompareHashAndPassword(
+		// 	[]byte(user.PasswordHash),
+		// 	[]byte(p+os.Getenv("PEPPER")))
+
+		// switch err {
+		// case nil:
+
+		// 	defer db.Conn.Close(context.Background())
+		// 	_, err = db.Conn.Exec(context.Background(), "UPDATE users set token=$1 WHERE id=($2)", user.Token, &user.Id)
+
+		// 	if err != nil {
+		// 		return err
+		// 	}
+
+		// 	return c.JSON(http.StatusOK, map[string]string{
+		// 		"token": t,
+		// 	})
+
+		// case bcrypt.ErrMismatchedHashAndPassword:
+		// 	return c.JSON(http.StatusBadRequest, err.Error())
+		// default:
+		// 	return c.JSON(http.StatusOK, user)
+
+		return c.JSON(http.StatusOK, resp)
 
 	}
 
@@ -107,11 +147,11 @@ func CreateDb(db *pgxpool.Pool) echo.HandlerFunc {
 			return err
 		}
 
-		// if err := m.Down(); err != nil {
-		// 	fmt.Fprintf(os.Stderr, "Unable to migrate down: %v\n", err)
-		// 	os.Exit(1)
-		// 	return err
-		// }
+		if err := m.Down(); err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to migrate down: %v\n", err)
+			os.Exit(1)
+			return err
+		}
 
 		if err := m.Up(); err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to migarate up: %v\n", err)
