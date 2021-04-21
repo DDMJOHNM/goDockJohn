@@ -63,6 +63,10 @@ func Login(db *pgxpool.Pool) echo.HandlerFunc {
 		c.Logger().Debug(user)
 		c.Logger().Debug(resp)
 
+		//TODO convert query to use connection pool and render resp
+		//TODO test jwt middle and auth get user route
+		//TODO plan next handlers
+
 		// err = bcrypt.CompareHashAndPassword(
 		// 	[]byte(user.PasswordHash),
 		// 	[]byte(p+os.Getenv("PEPPER")))
