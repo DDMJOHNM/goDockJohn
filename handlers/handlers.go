@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -70,7 +71,7 @@ func Login(db *pgxpool.Pool) echo.HandlerFunc {
 		switch err {
 		case nil:
 
-			defer db.Close()
+			//defer db.Close()
 			_, err = db.Exec(context.Background(), "UPDATE users set token=$1 WHERE id=($2)", resp.Token, &user.Id)
 
 			if err != nil {
@@ -133,7 +134,30 @@ func CreateUser(db *pgxpool.Pool) echo.HandlerFunc {
 	}
 }
 
+func GetUserByID(db *pgxpool.Pool) echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+		user := new(users.User)
+
+		idd, err := strconv.ParseInt(c.FormValue("id"), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		err = db.QueryRow(context.Background(), "SELECT id, name, createdAt FROM public.users WHERE id=$1", idd).Scan(&user.Id, &user.Name, &user.CreatedAt)
+		if err != nil {
+			return err
+		}
+
+		c.Logger().Debug(user)
+
+		return c.JSON(http.StatusOK, user)
+	}
+}
+
 func CreateDb(db *pgxpool.Pool) echo.HandlerFunc {
+
+	//todo add db seed for users here
 
 	return func(c echo.Context) error {
 
