@@ -60,38 +60,33 @@ func Login(db *pgxpool.Pool) echo.HandlerFunc {
 
 		resp.Token = t
 
-		c.Logger().Debug(user)
-		c.Logger().Debug(resp)
+		//c.Logger().Debug(user)
+		//c.Logger().Debug(resp)
 
-		//TODO convert query to use connection pool and render resp
-		//TODO test jwt middle and auth get user route
-		//TODO plan next handlers
+		err = bcrypt.CompareHashAndPassword(
+			[]byte(user.PasswordHash),
+			[]byte(lr.Password+os.Getenv("PEPPER")))
 
-		// err = bcrypt.CompareHashAndPassword(
-		// 	[]byte(user.PasswordHash),
-		// 	[]byte(p+os.Getenv("PEPPER")))
+		switch err {
+		case nil:
 
-		// switch err {
-		// case nil:
+			defer db.Close()
+			_, err = db.Exec(context.Background(), "UPDATE users set token=$1 WHERE id=($2)", resp.Token, &user.Id)
 
-		// 	defer db.Conn.Close(context.Background())
-		// 	_, err = db.Conn.Exec(context.Background(), "UPDATE users set token=$1 WHERE id=($2)", user.Token, &user.Id)
+			if err != nil {
+				return err
+			}
 
-		// 	if err != nil {
-		// 		return err
-		// 	}
+			return c.JSON(http.StatusOK, map[string]string{
+				"token": t,
+			})
 
-		// 	return c.JSON(http.StatusOK, map[string]string{
-		// 		"token": t,
-		// 	})
+		case bcrypt.ErrMismatchedHashAndPassword:
+			return c.JSON(http.StatusBadRequest, err.Error())
+		default:
+			return c.JSON(http.StatusOK, user)
 
-		// case bcrypt.ErrMismatchedHashAndPassword:
-		// 	return c.JSON(http.StatusBadRequest, err.Error())
-		// default:
-		// 	return c.JSON(http.StatusOK, user)
-
-		return c.JSON(http.StatusOK, resp)
-
+		}
 	}
 
 }
