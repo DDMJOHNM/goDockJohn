@@ -2,7 +2,7 @@ package main
 
 import (
 	"composetest/bindings"
-	"composetest/handlers"
+	handlers "composetest/handlers"
 	"composetest/models"
 	"context"
 	"fmt"
@@ -45,9 +45,14 @@ func main() {
 	})
 
 	v1 := e.Group("/v1")
+
 	users := v1.Group("/user", middleware.JWT(signingKey))
 	users.Use(middleware.JWT(signingKey))
 	users.GET("/:id", handlers.GetUserByID(dbpool))
+
+	//uploads := v1.Group("/upload", middleware.JWT(signingKey))
+	//uploads.Use(middleware.JWT(signingKey))
+	e.POST("upload", handlers.Upload(dbpool))
 
 	e.Logger.Fatal(e.Start(":8000"))
 
